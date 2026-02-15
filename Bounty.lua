@@ -2,7 +2,7 @@
 _G.LemonAutoBounty = true
 _G.TargetPlayer = nil
 _G.IgnoredPlayers = {}
-_G.TweenSpeed = 50.0 -- Ajuste aqui a velocidade (maior = mais lento)
+_G.TweenSpeed = 30.0 -- Ajuste aqui a velocidade (maior = mais lento)
 
 local player = game.Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
