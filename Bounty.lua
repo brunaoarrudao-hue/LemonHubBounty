@@ -2,7 +2,7 @@
 _G.LemonAutoBounty = true
 _G.TargetPlayer = nil
 _G.IgnoredPlayers = {}
-_G.TweenSpeed = 300 -- Ajuste aqui a velocidade (maior = mais lento)
+_G.TweenSpeed = 50.0 -- Ajuste aqui a velocidade (maior = mais lento)
 
 local player = game.Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
@@ -31,7 +31,7 @@ Corner.Parent = MainFrame
 
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 35)
-Title.Text = "🍋 LEMON HUB PVPER"
+Title.Text = "🍋 Lemon Hub Bounty"
 Title.TextColor3 = Color3.fromRGB(255, 255, 0)
 Title.Font = Enum.Font.GothamBold
 Title.BackgroundTransparency = 1
