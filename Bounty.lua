@@ -1,89 +1,99 @@
+-- // Lemon Hub - Auto Bounty System 2026
 _G.LemonAutoBounty = true
 _G.TargetPlayer = nil
+_G.IgnoredPlayers = {}
+_G.TweenSpeed = 2.0 -- Ajuste aqui a velocidade (maior = mais lento)
 
 local player = game.Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
 local VIM = game:GetService("VirtualInputManager")
-local RunService = game:GetService("RunService")
 
 -- ==========================================
--- 1. CRIANDO A INTERFACE PRÓPRIA (LEMON HUB)
+-- 1. INTERFACE PRÓPRIA (UI NATIVA)
 -- ==========================================
 local LemonGui = Instance.new("ScreenGui")
 LemonGui.Name = "LemonHubBounty"
 LemonGui.Parent = game.CoreGui
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 200, 0, 100)
-MainFrame.Position = UDim2.new(0.5, -100, 0, 20)
-MainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+MainFrame.Size = UDim2.new(0, 220, 0, 130)
+MainFrame.Position = UDim2.new(0.5, -110, 0, 50)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true -- Você pode arrastar a janela
 MainFrame.Parent = LemonGui
 
+-- Bordas Arredondadas
+local Corner = Instance.new("UICorner")
+Corner.CornerRadius = UDim.new(0, 10)
+Corner.Parent = MainFrame
+
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.Text = "🍋 Lemon Hub - Auto Bounty"
+Title.Size = UDim2.new(1, 0, 0, 35)
+Title.Text = "🍋 LEMON HUB PVPER"
 Title.TextColor3 = Color3.fromRGB(255, 255, 0)
+Title.Font = Enum.Font.GothamBold
 Title.BackgroundTransparency = 1
 Title.Parent = MainFrame
 
-local BountyLabel = Instance.new("TextLabel")
-BountyLabel.Size = UDim2.new(1, 0, 0, 30)
-BountyLabel.Position = UDim2.new(0, 0, 0, 30)
-BountyLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-BountyLabel.BackgroundTransparency = 1
-BountyLabel.Parent = MainFrame
+local InfoLabel = Instance.new("TextLabel")
+InfoLabel.Size = UDim2.new(1, 0, 0, 25)
+InfoLabel.Position = UDim2.new(0, 0, 0, 35)
+InfoLabel.Text = "Buscando alvo..."
+InfoLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+InfoLabel.BackgroundTransparency = 1
+InfoLabel.Parent = MainFrame
 
 local SkipButton = Instance.new("TextButton")
-SkipButton.Size = UDim2.new(0.8, 0, 0, 30)
-SkipButton.Position = UDim2.new(0.1, 0, 0, 65)
+SkipButton.Size = UDim2.new(0, 180, 0, 35)
+SkipButton.Position = UDim2.new(0, 20, 0, 75)
 SkipButton.Text = "Pular Jogador ⏭️"
-SkipButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+SkipButton.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
 SkipButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+SkipButton.Font = Enum.Font.GothamBold
 SkipButton.Parent = MainFrame
 
--- Lógica do botão de pular
-SkipButton.MouseButton1Click:Connect(function()
-    _G.TargetPlayer = nil
-    print("Buscando novo alvo...")
-end)
+local SkipCorner = Instance.new("UICorner")
+SkipCorner.CornerRadius = UDim.new(0, 8)
+SkipCorner.Parent = SkipButton
 
 -- ==========================================
--- 2. FUNÇÕES DE COMBATE E MOVIMENTO
+-- 2. LÓGICA DE COMBATE E SKILLS
 -- ==========================================
 
--- Função para atualizar o Bounty na tela
-task.spawn(function()
-    while task.wait(1) do
-        pcall(function()
-            local bounty = player.leaderstats:FindFirstChild("Bounty") or player.leaderstats:FindFirstChild("Honor")
-            if bounty then
-                BountyLabel.Text = "Bounty: " .. tostring(bounty.Value)
-            end
-        end)
-    end
-end)
-
--- Função de Spam de Skills e Clique Clássico
-local function SpamSkills()
-    -- Clique clássico
+local function SpamCombat()
+    -- Clique Clássico
     VIM:SendMouseButtonEvent(0, 0, 0, true, game, 0)
     VIM:SendMouseButtonEvent(0, 0, 0, false, game, 0)
     
-    -- Spam de teclas (Z, X, C, V) e Raça (T, Y)
+    -- Teclas de Skill e Raça (Z, X, C, V, T, Y)
     local keys = {Enum.KeyCode.Z, Enum.KeyCode.X, Enum.KeyCode.C, Enum.KeyCode.V, Enum.KeyCode.T, Enum.KeyCode.Y}
     for _, key in pairs(keys) do
         VIM:SendKeyEvent(true, key, false, game)
-        task.wait(0.05)
+        task.wait(0.01)
         VIM:SendKeyEvent(false, key, false, game)
     end
 end
 
 -- ==========================================
--- 3. O LOOP DE CAÇA (TWEEN + LOW HEALTH)
+-- 3. BOTÃO PULAR JOGADOR
+-- ==========================================
+SkipButton.MouseButton1Click:Connect(function()
+    if _G.TargetPlayer then
+        _G.IgnoredPlayers[_G.TargetPlayer.Name] = true
+        _G.TargetPlayer = nil
+        InfoLabel.Text = "Jogador Pulado!"
+        task.wait(0.5)
+    end
+end)
+
+-- ==========================================
+-- 4. LOOP PRINCIPAL (TWEEN + CAÇA + FUGA)
 -- ==========================================
 task.spawn(function()
     while _G.LemonAutoBounty do
-        task.wait()
+        task.wait(0.1)
         pcall(function()
             local char = player.Character
             local hrp = char:FindFirstChild("HumanoidRootPart")
@@ -92,39 +102,46 @@ task.spawn(function()
             if not hrp or not hum then return end
 
             -- SISTEMA DE FUGA (Low Health)
-            if hum.Health < (hum.MaxHealth * 0.3) then -- Se a vida ficar menor que 30%
-                -- Voa para o céu para recuperar a vida
-                local safeCFrame = CFrame.new(hrp.Position.X, hrp.Position.Y + 2000, hrp.Position.Z)
-                hrp.CFrame = safeCFrame
-                task.wait(1) -- Fica lá em cima até curar
-                return -- Pausa o ataque
+            if hum.Health < (hum.MaxHealth * 0.3) then
+                InfoLabel.Text = "Vida Baixa! Fugindo..."
+                hrp.CFrame = CFrame.new(hrp.Position.X, hrp.Position.Y + 1500, hrp.Position.Z)
+                repeat task.wait(0.5) until hum.Health >= (hum.MaxHealth * 0.85) or not _G.LemonAutoBounty
+                return
             end
 
-            -- SISTEMA DE BUSCA DE ALVO
+            -- BUSCA DE ALVO (Com Blacklist)
             if not _G.TargetPlayer or not _G.TargetPlayer.Character or _G.TargetPlayer.Character.Humanoid.Health <= 0 then
-                -- Acha o jogador mais próximo que não seja da mesma tripulação (simplificado)
+                local found = false
                 for _, v in pairs(game.Players:GetPlayers()) do
-                    if v ~= player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character.Humanoid.Health > 0 then
+                    if v ~= player and not _G.IgnoredPlayers[v.Name] and v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character.Humanoid.Health > 0 then
                         _G.TargetPlayer = v
+                        found = true
                         break
                     end
                 end
+                
+                if not found then
+                    _G.IgnoredPlayers = {} -- Reseta se todos foram pulados
+                    InfoLabel.Text = "Reiniciando Lista..."
+                end
             end
 
-            -- SISTEMA DE PERSEGUIÇÃO (Tween) E ATAQUE
+            -- PERSEGUIÇÃO E ATAQUE
             if _G.TargetPlayer and _G.TargetPlayer.Character then
                 local targetHrp = _G.TargetPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if targetHrp then
-                    -- Vai para cima do inimigo (Tween rápido/Teleporte)
-                    local tweenInfo = TweenInfo.new(3.0, Enum.EasingStyle.Linear)
+                local targetHum = _G.TargetPlayer.Character:FindFirstChild("Humanoid")
+                
+                if targetHrp and targetHum then
+                    InfoLabel.Text = "Caçando: " .. _G.TargetPlayer.DisplayName
+                    
+                    -- Tween Ajustável
+                    local tweenInfo = TweenInfo.new(_G.TweenSpeed, Enum.EasingStyle.Linear)
                     local tween = TweenService:Create(hrp, tweenInfo, {CFrame = targetHrp.CFrame * CFrame.new(0, 0, 3)})
                     tween:Play()
                     
-                    -- Fica virado para o inimigo
+                    -- Girar para o alvo e bater
                     hrp.CFrame = CFrame.new(hrp.Position, targetHrp.Position)
-                    
-                    -- Ataca
-                    SpamSkills()
+                    SpamCombat()
                 end
             end
         end)
