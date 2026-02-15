@@ -116,7 +116,7 @@ task.spawn(function()
                 local targetHrp = _G.TargetPlayer.Character:FindFirstChild("HumanoidRootPart")
                 if targetHrp then
                     -- Vai para cima do inimigo (Tween rápido/Teleporte)
-                    local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Linear)
+                    local tweenInfo = TweenInfo.new(3.0, Enum.EasingStyle.Linear)
                     local tween = TweenService:Create(hrp, tweenInfo, {CFrame = targetHrp.CFrame * CFrame.new(0, 0, 3)})
                     tween:Play()
                     
